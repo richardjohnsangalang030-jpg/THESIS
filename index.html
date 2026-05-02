@@ -5,182 +5,96 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SmartHome Pro | Dashboard</title>
 
-  <!-- Firebase COMPAT -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
   <style>
-    :root {
-      --primary: #6366f1;
-      --success: #10b981;
-      --danger: #ef4444;
-      --warning: #f59e0b;
-      --card-bg: rgba(30, 41, 59, 0.7);
-    }
+    :root { --primary: #6366f1; --success: #10b981; --danger: #ef4444; --card-bg: rgba(30, 41, 59, 0.7); }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: radial-gradient(circle at top left, #1e293b, #0f172a); color: #f1f5f9; min-height: 100vh; }
+    .container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 20px; padding-bottom: 100px; } /* Space para sa footer logout */
+    .card { background: var(--card-bg); backdrop-filter: blur(10px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
+    
+    .header-info { display: flex; gap: 15px; align-items: center; font-size: 0.9rem; margin-bottom: 10px; opacity: 0.8; }
+    .wifi-online { color: var(--success); }
+    .wifi-offline { color: var(--danger); }
+    #clock { font-weight: 600; letter-spacing: 1px; }
 
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: radial-gradient(circle at top left, #1e293b, #0f172a);
-      color: #f1f5f9;
-      min-height: 100vh;
-    }
-
-    .container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 20px; }
-
-    .card {
-      background: var(--card-bg);
-      backdrop-filter: blur(10px);
-      padding: 25px;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      height: 100%;
-    }
-
-    /* --- MODE BANNER --- */
-    .mode-banner {
-      display: flex; align-items: center; justify-content: center;
-      gap: 10px; padding: 12px; border-radius: 12px;
-      margin-bottom: 25px; font-weight: bold; text-transform: uppercase;
-      transition: 0.3s;
-    }
+    .mode-banner { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border-radius: 12px; margin-bottom: 25px; font-weight: bold; }
     .mode-auto { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid var(--success); }
     .mode-manual { background: rgba(99, 102, 241, 0.15); color: var(--primary); border: 1px solid var(--primary); }
-
-    /* --- SWITCH STYLING --- */
-    .switch-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
-    }
-
-    .switch {
-      position: relative; display: inline-block; width: 50px; height: 26px;
-    }
+    
+    .switch-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
     .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #334155; transition: .4s; border-radius: 34px;
-    }
-    .slider:before {
-      position: absolute; content: ""; height: 18px; width: 18px;
-      left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
-    }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
     input:checked + .slider { background-color: var(--primary); }
     input:checked + .slider:before { transform: translateX(24px); }
-
-    /* --- LAYOUT GRID --- */
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     
-    .status-badge { padding: 5px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
     .disabled-card { opacity: 0.4; pointer-events: none; filter: grayscale(0.8); }
     .hidden { display: none !important; }
+    .status-badge { padding: 5px 12px; border-radius: 8px; font-size: 0.85rem; }
 
-    /* LOGIN STYLES */
-    .btn-login { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; }
-    input[type="email"], input[type="password"] { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid #334155; background: #0f172a; color: white; }
+    /* FOOTER LOGOUT STYLING */
+    .footer-action { margin-top: 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px; }
+    .btn-logout { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); padding: 12px 40px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s; width: 100%; max-width: 300px; }
+    .btn-logout:hover { background: var(--danger); color: white; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  
-  <!-- LOGIN PAGE -->
   <div id="loginPage" class="hidden">
     <div style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
-      <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
-        <h1 style="margin-bottom: 5px;">SmartHome</h1>
-        <p style="color: #64748b; margin-bottom: 25px;">Please sign in to continue</p>
-        <input type="email" id="email" placeholder="Email Address">
-        <input type="password" id="password" placeholder="Password">
-        <button class="btn-login" onclick="login()">LOG IN</button>
+      <div class="card" style="width: 400px; text-align: center;">
+        <h1>SmartHome</h1>
+        <input type="email" id="email" placeholder="Email" style="width:100%; padding:10px; margin:10px 0; border-radius:8px; border:none;">
+        <input type="password" id="password" placeholder="Password" style="width:100%; padding:10px; margin:10px 0; border-radius:8px; border:none;">
+        <button onclick="login()" style="width:100%; padding:10px; background:var(--primary); color:white; border:none; border-radius:10px; font-weight:bold;">LOG IN</button>
       </div>
     </div>
   </div>
 
-  <!-- DASHBOARD -->
   <div id="dashboard" class="hidden">
-    <div class="header">
-      <h2 style="margin:0;">🏠 SmartHome <span style="color:var(--primary)">Pro</span></h2>
-      <button onclick="logout()" style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:600;">Logout</button>
+    <div class="header-info">
+      <span id="clock">00:00:00 AM</span>
+      <span>|</span>
+      <span id="wifiStatus"><span class="wifi-online">● Connected</span></span>
     </div>
 
-    <!-- MODE STATUS INDICATOR -->
+    <div style="margin-bottom:20px;">
+      <h2 style="margin:0;">🏠 SmartHome <span style="color:var(--primary)">Pro</span></h2>
+    </div>
+
     <div id="modeBanner" class="mode-banner mode-auto">
       <span id="modeText">System Mode: Auto</span>
     </div>
 
     <div class="grid">
-      <!-- PANEL 1: LIVE STATUS -->
       <div class="card">
-        <h3 style="margin-top:0; color: #94a3b8; font-size: 1rem; text-transform: uppercase;">Live Status</h3>
+        <h3>Live Status</h3>
+        <div class="switch-row"><span>🌧 Rain Sensor</span><b id="rain" class="status-badge">--</b></div>
+        <div class="switch-row"><span>💧 Water Level</span><b id="water" style="color:var(--primary)">--</b></div>
         <div class="switch-row">
-          <span>🌧 Rain Sensor</span>
-          <b id="rain" class="status-badge">Updating...</b>
-        </div>
-        <div class="switch-row">
-          <span>💧 Water Level</span>
-          <b id="water" style="color: var(--primary); font-size: 1.3rem;">--</b>
-        </div>
-        <div class="switch-row" style="border:none;">
-          <span>⚙ System Mode</span>
-          <label class="switch">
-            <input type="checkbox" id="modeSwitch" onchange="toggleMode(this)">
-            <span class="slider"></span>
-          </label>
+          <span>⚙ System Mode (Manual)</span>
+          <label class="switch"><input type="checkbox" id="modeSwitch" onchange="toggleMode(this)"><span class="slider"></span></label>
         </div>
       </div>
 
-      <!-- PANEL 2: SERVO CONTROLS (HOUSE ACCESS) -->
       <div id="accessPanel" class="card disabled-card">
-        <h3 style="margin-top:0; color: #94a3b8; font-size: 1rem; text-transform: uppercase;">House Access (Servos)</h3>
-        
-        <div class="switch-row">
-          <span>🚪 Servo 1 (Door)</span>
-          <label class="switch">
-            <input type="checkbox" id="servo1" onchange="toggleServo(1, this.checked)">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="switch-row">
-          <span>🪟 Servo 2 (Window A)</span>
-          <label class="switch">
-            <input type="checkbox" id="servo2" onchange="toggleServo(2, this.checked)">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="switch-row" style="border:none;">
-          <span>🪟 Servo 3 (Window B)</span>
-          <label class="switch">
-            <input type="checkbox" id="servo3" onchange="toggleServo(3, this.checked)">
-            <span class="slider"></span>
-          </label>
-        </div>
+        <h3>Manual Controls</h3>
+        <div class="switch-row"><span>Main Door</span><label class="switch"><input type="checkbox" id="servo1" onchange="toggleServo(1, this.checked)"><span class="slider"></span></label></div>
+        <div class="switch-row"><span>Window A</span><label class="switch"><input type="checkbox" id="servo2" onchange="toggleServo(2, this.checked)"><span class="slider"></span></label></div>
+        <div class="switch-row"><span>Window B</span><label class="switch"><input type="checkbox" id="servo3" onchange="toggleServo(3, this.checked)"><span class="slider"></span></label></div>
       </div>
+    </div>
 
-      <!-- PANEL 3: SAFETY SYSTEM (ELEVATION) -->
-      <div id="safetyPanel" class="card disabled-card">
-        <h3 style="margin-top:0; color: #94a3b8; font-size: 1rem; text-transform: uppercase;">Safety System</h3>
-        <div class="switch-row" style="border:none;">
-          <div>
-            <div style="font-weight: bold;">House Elevation</div>
-            <small style="color: #64748b;">Elevate / Stable</small>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="cmd-elevate" onchange="toggleCmd(this, 'elevate', 'stable')">
-            <span class="slider"></span>
-          </label>
-        </div>
-        <p style="font-size: 0.8rem; color: #475569; margin-top: 15px;">
-          *Manual control for flood protection mechanism.
-        </p>
-      </div>
+    <!-- LOGOUT SA BABA -->
+    <div class="footer-action">
+        <button class="btn-logout" onclick="logout()">LOGOUT SYSTEM</button>
+        <p style="opacity: 0.4; font-size: 0.7rem; margin-top: 15px;">SmartHome Pro v2.0 - Secure Session</p>
     </div>
   </div>
 </div>
@@ -195,59 +109,61 @@
   const auth = firebase.auth();
   const db = firebase.database();
   const houseRef = db.ref("/house");
-  const servosRef = db.ref("/house/servos"); // Path para sa servos
 
-  // AUTH LOGIC
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').innerText = now.toLocaleTimeString();
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  function updateOnlineStatus() {
+    const status = document.getElementById('wifiStatus');
+    status.innerHTML = navigator.onLine ? 
+      '<span class="wifi-online">● Connected</span>' : 
+      '<span class="wifi-offline">○ Offline</span>';
+  }
+
   function login() {
     const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    auth.signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
+    const pass = document.getElementById("password").value;
+    auth.signInWithEmailAndPassword(email, pass).catch(err => alert(err.message));
   }
-  function logout() { auth.signOut().then(() => location.reload()); }
-
-  // DATABASE WRITES
-  function toggleMode(el) { houseRef.update({ mode: el.checked ? 'manual' : 'auto' }); }
-  function toggleCmd(el, onLabel, offLabel) { houseRef.update({ command: el.checked ? onLabel : offLabel }); }
   
-  // BAGONG FUNCTION PARA SA SERVOS
-  function toggleServo(num, state) {
-    const val = state ? "TRUE" : "FALSE";
-    servosRef.update({ [`servo${num}`]: val });
+  function logout() { 
+    if(confirm("Are you sure you want to logout?")) {
+        auth.signOut().then(() => location.reload());
+    }
   }
 
-  // DATABASE LISTENERS
+  function toggleMode(el) { houseRef.update({ mode: el.checked ? 'manual' : 'auto' }); }
+  function toggleServo(num, state) { db.ref(`/house/servos/servo${num}`).set(state ? "TRUE" : "FALSE"); }
+
   function listenData() {
     houseRef.on("value", (snap) => {
       const data = snap.val();
       if (!data) return;
 
-      // Update Rain & Water
       const rainEl = document.getElementById("rain");
-      const isRaining = data.rain && data.rain.toLowerCase() === "raining";
       rainEl.innerText = data.rain || "N/A";
-      rainEl.style.background = isRaining ? "var(--danger)" : "var(--success)";
-      rainEl.style.color = "white";
+      rainEl.style.background = data.rain === "Raining" ? "var(--danger)" : "var(--success)";
       document.getElementById("water").innerText = data.water || "0";
 
-      // Sync Mode Display
       const isManual = data.mode === 'manual';
       document.getElementById("modeSwitch").checked = isManual;
       document.getElementById("modeBanner").className = isManual ? "mode-banner mode-manual" : "mode-banner mode-auto";
-      document.getElementById("modeText").innerText = isManual ? "⚠️ Manual Mode Active" : "🛡️ System Running on Auto";
+      document.getElementById("modeText").innerText = isManual ? "Manual Control Active" : "Auto Protection Active";
       
-      // Lock/Unlock Panels
-      const panels = [document.getElementById("accessPanel"), document.getElementById("safetyPanel")];
-      panels.forEach(p => isManual ? p.classList.remove("disabled-card") : p.classList.add("disabled-card"));
+      const panel = document.getElementById("accessPanel");
+      isManual ? panel.classList.remove("disabled-card") : panel.classList.add("disabled-card");
 
-      // Sync Servo Switch Positions (From Firebase to UI)
       if (data.servos) {
-        document.getElementById("servo1").checked = (data.servos.servo1 === "TRUE");
-        document.getElementById("servo2").checked = (data.servos.servo2 === "TRUE");
-        document.getElementById("servo3").checked = (data.servos.servo3 === "TRUE");
+        document.getElementById("servo1").checked = data.servos.servo1 === "TRUE";
+        document.getElementById("servo2").checked = data.servos.servo2 === "TRUE";
+        document.getElementById("servo3").checked = data.servos.servo3 === "TRUE";
       }
-
-      // Sync Elevation Position
-      document.getElementById("cmd-elevate").checked = (data.command === 'elevate');
     });
   }
 
@@ -256,12 +172,12 @@
       document.getElementById("loginPage").classList.add("hidden");
       document.getElementById("dashboard").classList.remove("hidden");
       listenData();
+      updateOnlineStatus();
     } else {
       document.getElementById("loginPage").classList.remove("hidden");
       document.getElementById("dashboard").classList.add("hidden");
     }
   });
 </script>
-
 </body>
 </html>
